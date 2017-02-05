@@ -2,12 +2,19 @@ package soap;
 
 import java.io.*;
 import java.net.*;
+import javax.xml.namespace.QName;
+import javax.xml.transform.Source;
+import javax.xml.ws.Dispatch;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.ws.Service;
+import java.io.StringReader;
 
 public class SOAPClient {
     public static void main(String[] args) throws Exception {
         SOAPClient m=new SOAPClient();
 //        m.getToket("2060", "1234", "1234");
-m.verify("3534534534", "93525457975513877165");
+//m.verify_bywebservice("", "");
+m.verify("", "");
     }
     public String verify(String refid,String token){
 //        boolean res=false;
@@ -17,9 +24,9 @@ m.verify("3534534534", "93525457975513877165");
     	System.setProperty("javax.net.ssl.keyStorePassword","keystore");
         System.out.println("!!!!"+System.getProperty("javax.net.ssl.keyStore")+"!!!!!!");
         System.out.println("!!!!"+System.getProperty("javax.net.ssl.keyStore")+"!!!!!!");
-        String SOAPUrl      = "‫‪https://ikc.shaparak.ir/TVerify/Verify.svc?wsdl";
+        String SOAPUrl      = "https://ikc.shaparak.ir/TVerify/Verify.svc?wsdl";
 //        String xmlFile2Send = "files/data.xml";
-		String SOAPAction = "http://tempuri.org/TVerify/Verify";
+		String SOAPAction = "http://tempuri.org/IVerify/KicccPaymentsVerification";
 				
         // Create the connection where we're going to send the file.
         URL url = new URL(SOAPUrl);
@@ -28,13 +35,14 @@ m.verify("3534534534", "93525457975513877165");
         
         String date="<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 + "<SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:ns4286=\"http://tempuri.org\"><SOAP-ENV:Body>"
-                + "<Verify xmlns=\"http://tempuri.org/\">"
+                + "<KicccPaymentsVerification xmlns=\"http://tempuri.org/\">"
                
-                + "<merchantId>B6A3</merchantId>"
                 + "<token>"+token+"</token>"
-                + "<‫‪referenceId‬‬>"+refid+"</‫‪referenceId‬‬>"
+                + "<merchantId>B6A3</merchantId>"
+                + "<referenceNumber>"+refid+"</referenceNumber>"
+                + "<sha1Key>22338240992352910814917221751200141041845518824222260</sha1Key>"
                 
-                + "</Verify>"
+                + "</KicccPaymentsVerification>"
                 + "</SOAP-ENV:Body></SOAP-ENV:Envelope>";
         
         byte[] b = date.getBytes(); //Converted to Byte Array
@@ -69,9 +77,12 @@ m.verify("3534534534", "93525457975513877165");
         return token;
             }catch(Exception s){
                 s.printStackTrace();
-                return "bug";
+                return "bug!!!!"+s.getMessage();
             }
 //        return res;
+    }
+    public String verify_bywebservice(String refid,String token){
+        return kicccPaymentsVerification(refid, token);
     }
         public String getToket(String amount,String invoice,String paymentid){
             try{
@@ -89,7 +100,8 @@ m.verify("3534534534", "93525457975513877165");
         URLConnection connection = url.openConnection();
         HttpURLConnection httpConn = (HttpURLConnection) connection;
         
-        String date="<?xml version=\"1.0\" encoding=\"UTF-8\"?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:ns4286=\"http://tempuri.org\"><SOAP-ENV:Body><MakeToken xmlns=\"http://tempuri.org/\"><amount>"+amount+"</amount><merchantId>B6A3</merchantId><invoiceNo>"+invoice+"</invoiceNo><paymentId>"+paymentid+"</paymentId><revertURL>http://javahosting.ir:8080/ikc/back.jsp</revertURL></MakeToken></SOAP-ENV:Body></SOAP-ENV:Envelope>";
+        String date="<?xml version=\"1.0\" encoding=\"UTF-8\"?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" xmlns:ns4286=\"http://tempuri.org\"><SOAP-ENV:Body>"
+                + "<MakeToken xmlns=\"http://tempuri.org/\"><amount>"+amount+"</amount><merchantId>B6A3</merchantId><invoiceNo>"+invoice+"</invoiceNo><paymentId>"+paymentid+"</paymentId><revertURL>http://javahosting.ir:8080/ikc/back.jsp</revertURL></MakeToken></SOAP-ENV:Body></SOAP-ENV:Envelope>";
         
         byte[] b = date.getBytes(); //Converted to Byte Array
         
@@ -129,5 +141,27 @@ m.verify("3534534534", "93525457975513877165");
                 return s.getMessage()+"/dargah/keystore.jks";
             }
             
+    }
+
+    private String kicccPaymentsVerification(String token,String ref) {
+        soap.webservice.Verify service = new soap.webservice.Verify();
+        QName portQName = new QName("http://tempuri.org/", "BasicHttpBinding_IVerify");
+        String req = "<KicccPaymentsVerification  xmlns=\"http://tempuri.org/\">"
+                + "<token>"+token+"</token>"
+                + "<merchantId>B6A3</merchantId>"
+                + "<referenceNumber>"+ref+"</referenceNumber>"
+                + "<sha1Key>22338240992352910814917221751200141041845518824222260</sha1Key>"
+                + "</KicccPaymentsVerification>";
+        try {
+            // Call Web Service Operation
+            Dispatch<Source> sourceDispatch = null;
+            sourceDispatch = service.createDispatch(portQName, Source.class, Service.Mode.PAYLOAD);
+            Source result = sourceDispatch.invoke(new StreamSource(new StringReader(req)));
+            return result.toString();
+        } catch (Exception ex) {
+            // TODO handle custom exceptions here
+            ex.printStackTrace();
+            return "-";
+        }
     }
 }

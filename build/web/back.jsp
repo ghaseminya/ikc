@@ -13,10 +13,9 @@
         <title>JSP Page</title>
         <% 
         soap.SOAPClient mnm=new SOAPClient();
-        String token=request.getParameter("Token");
-        String refid=request.getParameter("Token");
-        String metchentid="B6A3";
-        String verify=mnm.verify(token,refid);
+        String token=request.getParameter("token");
+        String refid=request.getParameter("referenceId");
+        String verify=mnm.verify(refid,token);
             %>
     </head>
     <body>
